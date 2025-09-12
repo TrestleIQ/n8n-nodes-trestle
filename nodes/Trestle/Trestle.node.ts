@@ -246,19 +246,16 @@ export class Trestle implements INodeType {
 		const credentials = await this.getCredentials('trestleApi');
 
 		for (let i = 0; i < items.length; i++) {
-			const resource = this.getNodeParameter('resource', i);
+			const resource = this.getNodeParameter('resource', i); 
 			const operation = this.getNodeParameter('operation', i);
-
+			
 			try {
 				if (resource === 'phoneValidation') {
 					let phone: string;
 					
-					if (operation === 'validate') {
-						phone = this.getNodeParameter('phone', i) as string;
-					} else if (operation === 'batchValidate') {
+					if (operation === 'validate' || operation === 'batchValidate') {
 						const phoneField = this.getNodeParameter('phoneField', i) as string;
 						phone = items[i].json[phoneField] as string;
-						
 						if (!phone) {
 							throw new NodeOperationError(this.getNode(), `Phone number not found in field '${phoneField}'`, {
 								itemIndex: i,
@@ -298,14 +295,34 @@ export class Trestle implements INodeType {
 
 				} else if (resource === 'realContact' && operation === 'verify') {
 					// Real Contact API call
-					const name = this.getNodeParameter('name', i) as string;
-					const phone = this.getNodeParameter('phone', i) as string;
-					const email = this.getNodeParameter('email', i) as string;
-					const ipAddress = this.getNodeParameter('ipAddress', i) as string;
-					const address = this.getNodeParameter('address', i) as string;
-					const city = this.getNodeParameter('city', i) as string;
-					const state = this.getNodeParameter('state', i) as string;
-					const postalCode = this.getNodeParameter('postalCode', i) as string;
+					const nameField = this.getNodeParameter('nameField', i) as string;
+					const phoneField = this.getNodeParameter('phoneField', i) as string;
+					const emailField = this.getNodeParameter('emailField', i) as string;
+					const ipAddressField = this.getNodeParameter('ipAddressField', i) as string;
+					const addressField = this.getNodeParameter('addressField', i) as string;
+					const cityField = this.getNodeParameter('cityField', i) as string;
+					const stateField = this.getNodeParameter('stateField', i) as string;
+					const postalCodeField = this.getNodeParameter('postalCodeField', i) as string;
+
+					const name = items[i].json[nameField] as string;
+					const phone = items[i].json[phoneField] as string;
+					const email = items[i].json[emailField] as string;
+					const ipAddress = items[i].json[ipAddressField] as string;
+					const address = items[i].json[addressField] as string;
+					const city = items[i].json[cityField] as string;
+					const state = items[i].json[stateField] as string;
+					const postalCode = items[i].json[postalCodeField] as string;
+
+					if (!name) {
+						throw new NodeOperationError(this.getNode(), `Name not found in field '${nameField}'`, {
+							itemIndex: i,
+						});
+					}
+					if (!phone) {
+						throw new NodeOperationError(this.getNode(), `Phone number not found in field '${phoneField}'`, {
+							itemIndex: i,
+						});
+					}
 					const includeEmailDeliverability = this.getNodeParameter('includeEmailDeliverability', i) as boolean;
 					const includeLitigatorCheck = this.getNodeParameter('includeLitigatorCheck', i) as boolean;
 
