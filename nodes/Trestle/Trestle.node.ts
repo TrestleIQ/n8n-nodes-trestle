@@ -290,7 +290,7 @@ export class Trestle implements INodeType {
 
 					returnData.push({
 						json: phoneApiResponse,
-						pairedItem: i,
+						pairedItem: { item: i },
 					});
 
 				} else if (resource === 'realContact' && operation === 'verify') {
@@ -360,7 +360,7 @@ export class Trestle implements INodeType {
 
 					returnData.push({
 						json: contactApiResponse,
-						pairedItem: i,
+						pairedItem: { item: i },
 					});
 				}
 			} catch (error) {
@@ -371,7 +371,7 @@ export class Trestle implements INodeType {
 
 						},
 						error,
-						pairedItem: i,
+						pairedItem: { item: i },
 					});
 				} else {
 					if (error.context) {
