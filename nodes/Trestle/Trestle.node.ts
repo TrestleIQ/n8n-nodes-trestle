@@ -1,10 +1,11 @@
 import type {
 	IExecuteFunctions,
+	IHttpRequestOptions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeConnectionType, NodeOperationError } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
 
 export class Trestle implements INodeType {
 	description: INodeTypeDescription = {
@@ -17,8 +18,8 @@ export class Trestle implements INodeType {
 		defaults: {
 			name: 'Trestle',
 		},
-		inputs: [NodeConnectionType.Main],
-		outputs: [NodeConnectionType.Main],
+		inputs: ['main'],
+		outputs: ['main'],
 		usableAsTool: true,
 		credentials: [
 			{
@@ -243,16 +244,15 @@ export class Trestle implements INodeType {
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
 		const returnData: INodeExecutionData[] = [];
-		const credentials = await this.getCredentials('trestleApi');
 
 		for (let i = 0; i < items.length; i++) {
-			const resource = this.getNodeParameter('resource', i); 
+			const resource = this.getNodeParameter('resource', i);
 			const operation = this.getNodeParameter('operation', i);
-			
+
 			try {
 				if (resource === 'phoneValidation') {
 					let phone: string;
-					
+
 					if (operation === 'validate' || operation === 'batchValidate') {
 						const phoneField = this.getNodeParameter('phoneField', i) as string;
 						phone = items[i].json[phoneField] as string;
@@ -277,20 +277,20 @@ export class Trestle implements INodeType {
 						queryString += `&addons=litigator_check`;
 					}
 
-					const phoneOptions = {
-						method: 'GET' as const,
+					const phoneOptions: IHttpRequestOptions = {
+						method: 'GET',
 						url: `https://api.trestleiq.com/3.0/phone_intel?${queryString}`,
-						headers: {
-							'x-api-key': credentials.apiKey as string,
-						},
 					};
 
-					const phoneResponse = await this.helpers.request(phoneOptions);
-					const phoneApiResponse = typeof phoneResponse === 'string' ? JSON.parse(phoneResponse) : phoneResponse;
+					const phoneApiResponse = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'trestleApi',
+						phoneOptions,
+					);
 
 					returnData.push({
 						json: phoneApiResponse,
-						pairedItem: i,
+						pairedItem: { item: i },
 					});
 
 				} else if (resource === 'realContact' && operation === 'verify') {
@@ -343,22 +343,24 @@ export class Trestle implements INodeType {
 					if (includeLitigatorCheck) addons.push('litigator_check');
 					if (addons.length > 0) body.addons = addons.join(',');
 
-					const contactOptions = {
-						method: 'POST' as const,
+					const contactOptions: IHttpRequestOptions = {
+						method: 'POST',
 						url: 'https://api.trestleiq.com/1.1/real_contact',
 						headers: {
-							'x-api-key': credentials.apiKey as string,
 							'Content-Type': 'application/json',
 						},
-						body: JSON.stringify(body),
+						body,
 					};
 
-					const contactResponse = await this.helpers.request(contactOptions);
-					const contactApiResponse = typeof contactResponse === 'string' ? JSON.parse(contactResponse) : contactResponse;
+					const contactApiResponse = await this.helpers.httpRequestWithAuthentication.call(
+						this,
+						'trestleApi',
+						contactOptions,
+					);
 
 					returnData.push({
 						json: contactApiResponse,
-						pairedItem: i,
+						pairedItem: { item: i },
 					});
 				}
 			} catch (error) {
@@ -369,7 +371,7 @@ export class Trestle implements INodeType {
 
 						},
 						error,
-						pairedItem: i,
+						pairedItem: { item: i },
 					});
 				} else {
 					if (error.context) {
