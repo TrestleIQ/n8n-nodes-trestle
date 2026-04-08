@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-trestle",
-	"version": "0.2.0",
+	"version": "0.2.2",
 	"description": "An n8n node for the Trestle Phone Validation and Contact Verification APIs.",
 	"keywords": [
 		"n8n-community-node-package",
@@ -53,9 +53,6 @@
 		"typescript": "^5.8.2"
 	},
 	"peerDependencies": {
-		"n8n-workflow": "*"
-	},
-	"overrides": {
-		"form-data": ">=4.0.4"
+		"n8n-workflow": ">=2.16.0"
 	}
 }
