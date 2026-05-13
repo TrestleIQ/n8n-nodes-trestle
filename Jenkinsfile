@@ -8,6 +8,12 @@ pipeline {
         label 'java22'
     }
 
+    environment {
+        NPM_TOKEN = credentials('npm-token')
+        NVM_DIR = "${env.HOME}/.nvm"
+        NODE_VERSION = "22"
+    }
+
     stages {
         stage('Retention Policy') {
             steps {
@@ -22,6 +28,62 @@ pipeline {
                 checkout scm
             }
         }
+
+        stage('Setup Node.js 22') {
+            steps {
+                sh '''
+                    # Install NVM if not present
+                    if [ ! -d "${NVM_DIR}" ]; then
+                        echo "Installing NVM..."
+                        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+                    else
+                        echo "NVM already installed"
+                    fi
+
+                    # Source NVM and install Node 22
+                    export NVM_DIR="${NVM_DIR}"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+                    nvm install ${NODE_VERSION}
+                    nvm use ${NODE_VERSION}
+
+                    echo "==============================================="
+                    echo "Node Version:"
+                    node -v
+
+                    echo "NPM Version:"
+                    npm -v
+                    echo "==============================================="
+                '''
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    export NVM_DIR="${NVM_DIR}"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    nvm use ${NODE_VERSION}
+
+                    echo "Installing dependencies with npm ci..."
+                    npm ci
+                '''
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh '''
+                    export NVM_DIR="${NVM_DIR}"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    nvm use ${NODE_VERSION}
+
+                    echo "Building project..."
+                    npm run build
+                '''
+            }
+        }
+
         stage('SonarQube Analysis') {
             when {
                 anyOf {
@@ -32,8 +94,13 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     sh '''
+                        export NVM_DIR="${NVM_DIR}"
+                        [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                        nvm use ${NODE_VERSION}
+
+                        echo "Running SonarQube analysis..."
                         rm -rf ~/.sonar/cache
-        
+
                         npx --yes sonarqube-scanner@4.2.6 \
                         -Dsonar.projectKey=n8n-nodes-trestle \
                         -Dsonar.projectName='n8n-nodes-trestle' \
@@ -46,6 +113,39 @@ pipeline {
                 }
             }
         }
+
+        stage('Publish to npm') {
+            when {
+                branch 'master'
+            }
+
+            steps {
+                sh '''
+                    export NVM_DIR="${NVM_DIR}"
+                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+                    nvm use ${NODE_VERSION}
+
+                    echo "Publishing to npm registry..."
+                    echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+
+                    npm publish
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Build and publish completed successfully."
+        }
+
+        failure {
+            echo "❌ Pipeline failed."
+        }
+
+        always {
+            sh 'rm -f ~/.npmrc || true'
+            cleanWs()
+        }
     }
 }
-
