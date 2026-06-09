@@ -9,7 +9,6 @@ pipeline {
     }
 
     environment {
-        NPM_TOKEN = credentials('npm-token')
         NVM_DIR = "${env.HOME}/.nvm"
         NODE_VERSION = "22"
     }
@@ -113,36 +112,9 @@ pipeline {
                 }
             }
         }
-
-        stage('Publish to npm') {
-            when {
-                branch 'master'
-            }
-
-            steps {
-                sh '''
-                    export NVM_DIR="${NVM_DIR}"
-                    [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-                    nvm use ${NODE_VERSION}
-
-                    echo "Publishing to npm registry..."
-                    echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-
-                    npm publish
-                '''
-            }
-        }
     }
 
     post {
-        success {
-            echo "✅ Build and publish completed successfully."
-        }
-
-        failure {
-            echo "❌ Pipeline failed."
-        }
-
         always {
             sh 'rm -f ~/.npmrc || true'
             cleanWs()
