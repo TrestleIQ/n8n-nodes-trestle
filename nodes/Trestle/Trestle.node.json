@@ -1,0 +1,14 @@
+{
+	"node": "n8n-nodes-trestle.trestle",
+	"nodeVersion": "2.0",
+	"codexVersion": "1.0",
+	"categories": ["Data & Storage"],
+	"resources": {
+		"primaryDocumentation": [
+			{
+				"url": "https://trestle-api.redoc.ly/Current/tag/Phone-Validation-API"
+			}
+		]
+	},
+	"alias": ["phone", "validation", "contact", "verification", "real contact", "phone intel"]
+}
