@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-trestle",
-	"version": "0.2.4",
+	"version": "0.2.5",
 	"description": "An n8n node for the Trestle Phone Validation and Contact Verification APIs.",
 	"keywords": [
 		"n8n-community-node-package",
@@ -17,7 +17,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/trestleiq/n8n-nodes-trestle.git"
+		"url": "https://github.com/Trestleiq/n8n-nodes-trestle.git"
 	},
 	"engines": {
 		"node": ">=20.15"
