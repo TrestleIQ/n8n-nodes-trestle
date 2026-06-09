@@ -86,7 +86,7 @@ pipeline {
         stage('SonarQube Analysis') {
             when {
                 anyOf {
-                    branch 'master'
+                    branch 'development'
                     expression { env.BRANCH_NAME ==~ /PR.*/ }
                 }
             }
