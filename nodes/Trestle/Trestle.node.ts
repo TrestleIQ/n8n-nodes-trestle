@@ -5,7 +5,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 export class Trestle implements INodeType {
 	description: INodeTypeDescription = {
@@ -15,11 +15,12 @@ export class Trestle implements INodeType {
 		group: ['transform'],
 		version: 2,
 		description: 'Validate phone numbers, emails, and contacts using Trestle APIs.',
+		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
 		defaults: {
 			name: 'Trestle',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
 		credentials: [
 			{
@@ -62,8 +63,8 @@ export class Trestle implements INodeType {
 					{
 						name: 'Validate Phone Number',
 						value: 'validate',
-						description: 'Validates phone numbers from input data',
-						action: 'Validate phone numbers',
+						description: 'validates phone numbers from input data',
+						action: 'validate phone numbers',
 					},
 				],
 				default: 'validate',
@@ -83,8 +84,8 @@ export class Trestle implements INodeType {
 					{
 						name: 'Verify Contact',
 						value: 'verify',
-						description: 'Verify and grade phone, email, and address information',
-						action: 'Verify contact information',
+						description: 'verify and grade phone, email, and address information',
+						action: 'verify contact information',
 					},
 				],
 				default: 'verify',
@@ -253,7 +254,7 @@ export class Trestle implements INodeType {
 				if (resource === 'phoneValidation') {
 					let phone: string;
 
-					if (operation === 'validate' || operation === 'batchValidate') {
+					if (operation === 'validate') {
 						const phoneField = this.getNodeParameter('phoneField', i) as string;
 						phone = items[i].json[phoneField] as string;
 						if (!phone) {
@@ -378,7 +379,7 @@ export class Trestle implements INodeType {
 						error.context.itemIndex = i;
 						throw error;
 					}
-					throw new NodeOperationError(this.getNode(), error, {
+					throw new NodeApiError(this.getNode(), error, {
 						itemIndex: i,
 					});
 				}

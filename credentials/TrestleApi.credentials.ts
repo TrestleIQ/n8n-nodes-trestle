@@ -3,11 +3,13 @@ import {
 	ICredentialTestRequest,
 	ICredentialType,
 	INodeProperties,
+	Icon,
 } from 'n8n-workflow';
 
 export class TrestleApi implements ICredentialType {
 	name = 'trestleApi';
 	displayName = 'Trestle API';
+	icon: Icon = 'file:trestle.svg';
 
 	documentationUrl = 'https://trestle-api.redoc.ly/Current/tag/Phone-Validation-API';
 
