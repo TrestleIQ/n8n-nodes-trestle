@@ -63,8 +63,8 @@ export class Trestle implements INodeType {
 					{
 						name: 'Validate Phone Number',
 						value: 'validate',
-						description: 'validates phone numbers from input data',
-						action: 'validate phone numbers',
+						description: 'Validates phone numbers from input data',
+						action: 'Validate phone numbers',
 					},
 				],
 				default: 'validate',
@@ -84,8 +84,8 @@ export class Trestle implements INodeType {
 					{
 						name: 'Verify Contact',
 						value: 'verify',
-						description: 'verify and grade phone, email, and address information',
-						action: 'verify contact information',
+						description: 'Verify and grade phone, email, and address information',
+						action: 'Verify contact information',
 					},
 				],
 				default: 'verify',
