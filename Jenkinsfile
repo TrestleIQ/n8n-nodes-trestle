@@ -28,6 +28,24 @@ pipeline {
             }
         }
 
+        stage('Gitleaks Secret Scan') {
+            steps {
+                script {
+                    gitleaksSecretScan([
+                        version: 'v8.30.1',
+                        githubCredentialsId: 'githubtoken',
+                        updateGitHubStatus: true,
+                        addPRComments: true,
+                        blockPRs: true,
+                        blockBranches: false,
+                        unstableBranches: true,
+                        branchNames: ['development']
+                    ])
+                }
+            }
+        }
+
+
         stage('Setup Node.js 22') {
             steps {
                 sh '''
