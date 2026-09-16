@@ -1,0 +1,99 @@
+name: Create Jira ticket for Dependabot PR
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+jobs:
+  create-jira-ticket:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Create Jira issue
+        id: jira
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_ASSIGNEE_ACCOUNT_ID: ${{ secrets.JIRA_ASSIGNEE_ACCOUNT_ID }}
+          JIRA_CLOUD_ID: "71fa8713-6796-4d72-85da-1d07ae8b55c0"
+          REPO_NAME: ${{ github.event.repository.name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+
+          SUMMARY="${REPO_NAME} :: Dependabot vuln fix ${PR_TITLE}"
+
+          PAYLOAD=$(jq -n \
+            --arg summary "$SUMMARY" \
+            --arg prUrl "$PR_URL" \
+            --arg prLabel "PR #${PR_NUMBER}" \
+            --arg prBody "${PR_BODY:-No description provided.}" \
+            --arg assignee "$JIRA_ASSIGNEE_ACCOUNT_ID" \
+            '{
+              fields: {
+                project: { key: "TRES" },
+                summary: $summary,
+                description: {
+                  type: "doc",
+                  version: 1,
+                  content: [
+                    {
+                      type: "paragraph",
+                      content: [
+                        { type: "text", text: "Dependabot opened " },
+                        {
+                          type: "text",
+                          text: $prLabel,
+                          marks: [ { type: "link", attrs: { href: $prUrl } } ]
+                        }
+                      ]
+                    },
+                    {
+                      type: "heading",
+                      attrs: { level: 3 },
+                      content: [ { type: "text", text: "Original PR description" } ]
+                    },
+                    {
+                      type: "codeBlock",
+                      content: [ { type: "text", text: $prBody } ]
+                    }
+                  ]
+                },
+                issuetype: { name: "Task" },
+                assignee: { id: $assignee },
+                parent: { key: "TRES-6525" }
+              }
+            }')
+
+          RESPONSE=$(curl -sS -X POST \
+            --connect-timeout 10 \
+            --max-time 30 \
+            -H "Authorization: Bearer ${JIRA_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "https://api.atlassian.com/ex/jira/${JIRA_CLOUD_ID}/rest/api/3/issue" \
+            -d "$PAYLOAD")
+
+          echo "Jira response: $RESPONSE"
+          KEY=$(echo "$RESPONSE" | jq -r '.key // empty')
+
+          if [ -z "$KEY" ]; then
+            echo "::error::Jira issue creation failed, see response above"
+            exit 1
+          fi
+
+          echo "key=$KEY" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on PR with Jira link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Tracked in Jira: https://trestleiq.atlassian.net/browse/${{ steps.jira.outputs.key }}`
+            });
