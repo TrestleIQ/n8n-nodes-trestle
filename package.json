@@ -62,6 +62,7 @@
 		"flatted": "3.4.2",
 		"minimatch": "9.0.9",
 		"brace-expansion": "2.1.7",
+		"uuid@^10": "11.1.1",
 		"eslint": {
 			"minimatch": "3.1.5",
 			"brace-expansion": "1.1.21"
